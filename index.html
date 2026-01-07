@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Click the Box Game</title>
+  <title>Snake Game</title>
 
   <!-- p5.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
@@ -10,54 +10,124 @@
   <style>
     body {
       margin: 0;
-      overflow: hidden;
-      background: #222;
+      background: #111;
       color: white;
       font-family: Arial, sans-serif;
-    }
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 24px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
-  <div id="score">Score: 0</div>
+  <h2>Snake Game</h2>
+  <p>Use arrow keys to move</p>
 
   <script>
-    let x, y, size = 60;
-    let score = 0;
+    let snake;
+    let rez = 20;
+    let food;
+    let w;
+    let h;
 
     function setup() {
-      createCanvas(window.innerWidth, window.innerHeight);
-      newBox();
+      createCanvas(400, 400);
+      w = floor(width / rez);
+      h = floor(height / rez);
+      frameRate(10);
+      snake = new Snake();
+      foodLocation();
+    }
+
+    function foodLocation() {
+      let x = floor(random(w));
+      let y = floor(random(h));
+      food = createVector(x, y);
     }
 
     function draw() {
-      background(30);
-      fill(255, 100, 100);
-      rect(x, y, size, size);
+      scale(rez);
+      background(20);
+
+      if (snake.eat(food)) {
+        foodLocation();
+      }
+
+      snake.update();
+      snake.show();
+
+      if (snake.endGame()) {
+        noLoop();
+        fill(255, 0, 0);
+        textSize(2);
+        text("GAME OVER", w / 2 - 4, h / 2);
+      }
+
+      fill(255, 0, 100);
+      rect(food.x, food.y, 1, 1);
     }
 
-    function mousePressed() {
-      if (mouseX > x && mouseX < x + size &&
-          mouseY > y && mouseY < y + size) {
-        score++;
-        document.getElementById("score").innerText = "Score: " + score;
-        newBox();
+    function keyPressed() {
+      if (keyCode === LEFT_ARROW) {
+        snake.setDir(-1, 0);
+      } else if (keyCode === RIGHT_ARROW) {
+        snake.setDir(1, 0);
+      } else if (keyCode === DOWN_ARROW) {
+        snake.setDir(0, 1);
+      } else if (keyCode === UP_ARROW) {
+        snake.setDir(0, -1);
       }
     }
 
-    function newBox() {
-      x = random(width - size);
-      y = random(height - size);
-    }
+    class Snake {
+      constructor() {
+        this.body = [];
+        this.body[0] = createVector(floor(w / 2), floor(h / 2));
+        this.xdir = 0;
+        this.ydir = 0;
+      }
 
-    function windowResized() {
-      resizeCanvas(window.innerWidth, window.innerHeight);
+      setDir(x, y) {
+        this.xdir = x;
+        this.ydir = y;
+      }
+
+      update() {
+        let head = this.body[this.body.length - 1].copy();
+        head.x += this.xdir;
+        head.y += this.ydir;
+        this.body.shift();
+        this.body.push(head);
+      }
+
+      show() {
+        fill(0, 255, 100);
+        for (let i = 0; i < this.body.length; i++) {
+          rect(this.body[i].x, this.body[i].y, 1, 1);
+        }
+      }
+
+      eat(pos) {
+        let head = this.body[this.body.length - 1];
+        if (head.x === pos.x && head.y === pos.y) {
+          this.body.push(head.copy());
+          return true;
+        }
+        return false;
+      }
+
+      endGame() {
+        let head = this.body[this.body.length - 1];
+        if (head.x > w - 1 || head.x < 0 || head.y > h - 1 || head.y < 0) {
+          return true;
+        }
+        for (let i = 0; i < this.body.length - 1; i++) {
+          let part = this.body[i];
+          if (part.x === head.x && part.y === head.y) {
+            return true;
+          }
+        }
+        return false;
+      }
     }
   </script>
 </body>
